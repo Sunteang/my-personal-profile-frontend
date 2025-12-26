@@ -1,5 +1,5 @@
 /**
- * Contact Page
+ * Contact Section
  * Contact form and social media links
  */
 
@@ -7,7 +7,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, MapPin, Phone, Send, Github, Linkedin, Twitter, CheckCircle } from "lucide-react";
 import { z } from "zod";
-import PageLayout from "@/components/PageLayout";
 import SectionHeader from "@/components/SectionHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,14 +17,14 @@ import { useToast } from "@/hooks/use-toast";
 
 // Form validation schema
 const contactSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
-  email: z.string().trim().email("Please enter a valid email").max(255, "Email must be less than 255 characters"),
-  message: z.string().trim().min(10, "Message must be at least 10 characters").max(1000, "Message must be less than 1000 characters"),
+  name: z.string().trim().min(1, "Name is required").max(100),
+  email: z.string().trim().email("Please enter a valid email").max(255),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(1000),
 });
 
 type ContactFormData = z.infer<typeof contactSchema>;
 
-const Contact = () => {
+const ContactSection = () => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -38,24 +37,9 @@ const Contact = () => {
 
   // Contact information
   const contactInfo = [
-    {
-      icon: Mail,
-      label: "Email",
-      value: "alex.johnson@example.com",
-      href: "mailto:alex.johnson@example.com",
-    },
-    {
-      icon: Phone,
-      label: "Phone",
-      value: "+1 (555) 123-4567",
-      href: "tel:+15551234567",
-    },
-    {
-      icon: MapPin,
-      label: "Location",
-      value: "San Francisco, CA",
-      href: null,
-    },
+    { icon: Mail, label: "Email", value: "alex.johnson@example.com", href: "mailto:alex.johnson@example.com" },
+    { icon: Phone, label: "Phone", value: "+1 (555) 123-4567", href: "tel:+15551234567" },
+    { icon: MapPin, label: "Location", value: "San Francisco, CA", href: null },
   ];
 
   // Social links
@@ -65,24 +49,18 @@ const Contact = () => {
     { icon: Twitter, label: "Twitter", href: "https://twitter.com" },
   ];
 
-  // Handle input changes
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
     if (errors[name as keyof ContactFormData]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validate form
     const result = contactSchema.safeParse(formData);
     if (!result.success) {
       const fieldErrors: Partial<ContactFormData> = {};
@@ -96,7 +74,7 @@ const Contact = () => {
       return;
     }
 
-    // Simulate form submission (replace with actual API call)
+    // Simulate form submission
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     setIsSubmitting(false);
@@ -106,7 +84,6 @@ const Contact = () => {
       description: "Thank you for reaching out. I'll get back to you soon.",
     });
 
-    // Reset form after delay
     setTimeout(() => {
       setFormData({ name: "", email: "", message: "" });
       setIsSubmitted(false);
@@ -114,20 +91,20 @@ const Contact = () => {
   };
 
   return (
-    <PageLayout>
-      <div className="container mx-auto">
+    <section id="contact" className="py-20">
+      <div className="container mx-auto px-4">
         <SectionHeader
           title="Get in Touch"
           subtitle="Have a question or want to work together? I'd love to hear from you!"
         />
 
-        <div className="grid lg:grid-cols-5 gap-12">
+        <div className="grid lg:grid-cols-5 gap-12 max-w-6xl mx-auto">
           {/* Contact Information */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="lg:col-span-2 space-y-8"
+            className="lg:col-span-2 space-y-6"
           >
             {/* Contact Details */}
             <div className="space-y-4">
@@ -140,10 +117,7 @@ const Contact = () => {
                   <div>
                     <p className="font-body text-sm text-muted-foreground">{item.label}</p>
                     {item.href ? (
-                      <a
-                        href={item.href}
-                        className="font-body font-medium hover:text-accent transition-colors"
-                      >
+                      <a href={item.href} className="font-body font-medium hover:text-accent transition-colors">
                         {item.value}
                       </a>
                     ) : (
@@ -213,8 +187,7 @@ const Contact = () => {
                     </p>
                   </motion.div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Name Field */}
+                  <form onSubmit={handleSubmit} className="space-y-5">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
                       <Input
@@ -226,12 +199,9 @@ const Contact = () => {
                         onChange={handleChange}
                         className={errors.name ? "border-destructive" : ""}
                       />
-                      {errors.name && (
-                        <p className="text-sm text-destructive">{errors.name}</p>
-                      )}
+                      {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
                     </div>
 
-                    {/* Email Field */}
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
                       <Input
@@ -243,36 +213,24 @@ const Contact = () => {
                         onChange={handleChange}
                         className={errors.email ? "border-destructive" : ""}
                       />
-                      {errors.email && (
-                        <p className="text-sm text-destructive">{errors.email}</p>
-                      )}
+                      {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
                     </div>
 
-                    {/* Message Field */}
                     <div className="space-y-2">
                       <Label htmlFor="message">Message</Label>
                       <Textarea
                         id="message"
                         name="message"
-                        placeholder="Tell me about your project or just say hello..."
-                        rows={5}
+                        placeholder="Tell me about your project..."
+                        rows={4}
                         value={formData.message}
                         onChange={handleChange}
                         className={`resize-none ${errors.message ? "border-destructive" : ""}`}
                       />
-                      {errors.message && (
-                        <p className="text-sm text-destructive">{errors.message}</p>
-                      )}
+                      {errors.message && <p className="text-sm text-destructive">{errors.message}</p>}
                     </div>
 
-                    {/* Submit Button */}
-                    <Button
-                      type="submit"
-                      variant="hero"
-                      size="lg"
-                      className="w-full"
-                      disabled={isSubmitting}
-                    >
+                    <Button type="submit" variant="hero" size="lg" className="w-full" disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <span className="animate-spin mr-2">⏳</span>
@@ -292,8 +250,8 @@ const Contact = () => {
           </motion.div>
         </div>
       </div>
-    </PageLayout>
+    </section>
   );
 };
 
-export default Contact;
+export default ContactSection;

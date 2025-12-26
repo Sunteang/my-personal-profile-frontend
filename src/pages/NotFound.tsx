@@ -2,12 +2,11 @@ import { motion } from "framer-motion";
 import { Home, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import PageLayout from "@/components/PageLayout";
 
 const NotFound = () => {
   return (
-    <PageLayout>
-      <div className="container mx-auto flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 pt-20">
+      <div className="container mx-auto flex flex-col items-center justify-center text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -28,7 +27,7 @@ const NotFound = () => {
           </div>
         </motion.div>
       </div>
-    </PageLayout>
+    </div>
   );
 };
 
