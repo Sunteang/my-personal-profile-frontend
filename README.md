@@ -1,11 +1,11 @@
-# Serey Sun Teang — Personal Portfolio
+# Serey Sunteang — Personal Portfolio
 
 This repository contains my personal portfolio website. It highlights my projects, skills, education, experience, and ways to contact me. The site is built with modern web tooling and a small admin area for content management.
 
 ## About me
 
-- **Name:** Serey Sun Teang (replace with preferred display name)
-- **Title:** Frontend Developer / Software Engineer (replace with your role)
+- **Name:** Serey Sunteang
+- **Title:** Frontend Developer
 - **Short bio:** A concise 1–2 sentence summary about you — what you build, technologies you love, and what you're currently working on. Replace this line with your personal bio.
 
 ## What this project is
@@ -66,5 +66,3 @@ Note: This README intentionally omits repository cloning instructions.
 - Fill in your real name, bio, and contact info in this README
 - Add project entries and images to `public/images/projects/`
 - Update the live demo URL when deployed
-
-If you'd like, tell me the exact text for your name, bio, role, and contact links and I'll fill them in across the README and Hero section.
