@@ -1,12 +1,7 @@
-/**
- * Admin Login Page
- * Simple password-based authentication UI
- */
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Lock, Eye, EyeOff, ArrowLeft, User } from "lucide-react"; // Added User icon
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +10,7 @@ import { useAdmin } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
 
 const AdminLogin = () => {
+  const [username, setUsername] = useState(""); // New state for username
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,19 +22,18 @@ const AdminLogin = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const success = await login(username, password);
 
-    if (login(password)) {
+    if (success) {
       toast({
         title: "Welcome back!",
-        description: "You've been logged in successfully.",
+        description: `Logged in as ${username}`,
       });
       navigate("/admin/dashboard");
     } else {
       toast({
-        title: "Invalid password",
-        description: "Please check your password and try again.",
+        title: "Login failed",
+        description: "Invalid credentials or not an admin.",
         variant: "destructive",
       });
     }
@@ -53,7 +48,6 @@ const AdminLogin = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        {/* Back to Portfolio Link */}
         <Button
           variant="ghost"
           onClick={() => navigate("/")}
@@ -70,11 +64,30 @@ const AdminLogin = () => {
             </div>
             <CardTitle className="font-heading text-2xl">Admin Login</CardTitle>
             <CardDescription>
-              Enter your password to access the admin dashboard
+              Enter your credentials to access the dashboard
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Username Field */}
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <div className="relative">
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Enter admin username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="pl-10" // Padding for icon
+                    autoFocus
+                    required
+                  />
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+
+              {/* Password Field */}
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
@@ -85,7 +98,7 @@ const AdminLogin = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pr-10"
-                    autoFocus
+                    required
                   />
                   <button
                     type="button"
@@ -105,18 +118,11 @@ const AdminLogin = () => {
                 type="submit"
                 variant="hero"
                 className="w-full"
-                disabled={isLoading || !password}
+                disabled={isLoading || !password || !username}
               >
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
-
-            {/* Demo hint */}
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <p className="text-sm text-muted-foreground text-center">
-                <strong>Demo:</strong> Use password <code className="bg-background px-1.5 py-0.5 rounded text-primary">admin123</code>
-              </p>
-            </div>
           </CardContent>
         </Card>
       </motion.div>

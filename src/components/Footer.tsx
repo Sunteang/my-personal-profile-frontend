@@ -1,43 +1,78 @@
-/**
- * Footer Component
- * Simple footer with social links and copyright
- */
-
-import { Github, Linkedin, Mail, Twitter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Github, Linkedin, Facebook, Twitter, Globe, Mail } from "lucide-react";
+import { fetchProfile, fetchSocialLinks } from "@/libs/api";
+import type { Profile, SocialLink } from "@/types";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [socials, setSocials] = useState<SocialLink[]>([]);
 
-  const socialLinks = [
-    { icon: Github, href: "https://github.com", label: "GitHub" },
-    { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-    { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Mail, href: "mailto:email@example.com", label: "Email" },
-  ];
+
+  useEffect(() => {
+    fetchProfile().then((data) => {
+      if (Array.isArray(data) && data.length > 0) {
+        setProfile(data[0]);
+      } else if (data && !Array.isArray(data)) {
+        setProfile(data);
+      }
+    }).catch(console.error);
+
+    fetchSocialLinks().then(setSocials).catch(console.error);
+  }, []);
+
+  const getSocialIcon = (platform: string) => {
+    switch (platform.toLowerCase()) {
+      case "github": return Github;
+      case "linkedin": return Linkedin;
+      case "facebook": return Facebook;
+      case "twitter": return Twitter;
+      default: return Globe;
+    }
+  };
 
   return (
-    <footer className="border-t border-border bg-card py-8">
-      <div className="container mx-auto">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          {/* Copyright */}
-          <p className="font-body text-sm text-muted-foreground">
-            © {currentYear} Alex Johnson. All rights reserved.
-          </p>
+    <footer className="border-t border-border bg-card py-12">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="text-center md:text-left">
+            <button
+              onClick={() => globalThis.location.href='/admin'}
+              className="font-heading font-semibold text-lg mb-1 flex items-center gap-2 justify-center md:justify-start cursor-default select-none">
+              {profile?.fullName || "Portfolio"}
+              
+            </button>
+            <p className="font-body text-sm text-muted-foreground">
+              © {currentYear} All rights reserved. Built with React & Spring Boot.
+            </p>
+          </div>
 
-          {/* Social Links */}
-          <div className="flex items-center gap-4">
-            {socialLinks.map((link) => (
+          <div className="flex items-center gap-2">
+            {profile?.email && (
               <a
-                key={link.label}
-                href={link.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2 rounded-lg text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all duration-300"
-                aria-label={link.label}
+                href={`mailto:${profile.email}`}
+                className="p-3 rounded-xl text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all"
+                aria-label="Email"
               >
-                <link.icon className="h-5 w-5" />
+                <Mail className="h-5 w-5" />
               </a>
-            ))}
+            )}
+
+            {socials.map((link) => {
+              const Icon = getSocialIcon(link.platform);
+              return (
+                <a
+                  key={link.platform}
+                  href={link.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-3 rounded-xl text-muted-foreground hover:text-accent hover:bg-accent/10 transition-all"
+                  aria-label={link.platform}
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              );
+            })}
           </div>
         </div>
       </div>

@@ -1,404 +1,330 @@
-/**
- * Admin Context
- * Manages admin authentication state and portfolio data (UI-only, localStorage-based)
- */
-
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-
-// Types for portfolio data
-export interface Profile {
-  fullName: string;
-  title: string;
-  introduction: string;
-  email: string;
-  phone: string;
-  location: string;
-  bio: string;
-  objectives: string;
-  interests: string[];
-  hobbies: string[];
-}
-
-export interface Education {
-  id: string;
-  institution: string;
-  degree: string;
-  field: string;
-  startYear: string;
-  endYear: string;
-  achievements: string[];
-}
-
-export interface Skill {
-  id: string;
-  name: string;
-  level: number;
-  category: "technical" | "soft";
-}
-
-export interface Project {
-  id: string;
-  title: string;
-  description: string;
-  technologies: string[];
-  githubUrl: string;
-  liveUrl: string;
-  featured: boolean;
-}
-
-export interface Experience {
-  id: string;
-  title: string;
-  company: string;
-  type: "fulltime" | "parttime" | "internship" | "volunteer";
-  startDate: string;
-  endDate: string;
-  current: boolean;
-  description: string;
-  achievements: string[];
-}
-
-export interface SocialLink {
-  id: string;
-  platform: string;
-  url: string;
-  icon: string;
-}
-
-export interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  message: string;
-  date: string;
-  read: boolean;
-}
+import { createContext, useContext, useState, useEffect, ReactNode, useMemo } from "react";
+import * as adminApi from "@/libs/adminApi";
+import { Profile, Education, Skill, Project, Experience, SocialLink, ContactMessage, ContactMessageRequest } from "@/types";
 
 interface AdminContextType {
   isAuthenticated: boolean;
-  login: (password: string) => boolean;
+  login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  profile: Profile;
+  profile: Profile | null;
   education: Education[];
   skills: Skill[];
   projects: Project[];
   experiences: Experience[];
   socialLinks: SocialLink[];
   messages: ContactMessage[];
-  updateProfile: (profile: Profile) => void;
-  addEducation: (education: Education) => void;
-  updateEducation: (id: string, education: Education) => void;
-  deleteEducation: (id: string) => void;
-  addSkill: (skill: Skill) => void;
-  updateSkill: (id: string, skill: Skill) => void;
-  deleteSkill: (id: string) => void;
-  addProject: (project: Project) => void;
-  updateProject: (id: string, project: Project) => void;
-  deleteProject: (id: string) => void;
-  addExperience: (experience: Experience) => void;
-  updateExperience: (id: string, experience: Experience) => void;
-  deleteExperience: (id: string) => void;
-  addSocialLink: (link: SocialLink) => void;
-  updateSocialLink: (id: string, link: SocialLink) => void;
-  deleteSocialLink: (id: string) => void;
-  markMessageAsRead: (id: string) => void;
-  deleteMessage: (id: string) => void;
+  refreshData: () => Promise<void>;
+
+  // CRUD
+  addProfile: (profile: Profile) => Promise<void>;
+  updateProfile: (profile: Profile) => Promise<void>;
+  deleteProfile: () => Promise<void>;
+
+  addEducation: (edu: Education) => Promise<void>;
+  updateEducation: (edu: Education) => Promise<void>;
+  deleteEducation: (eduId: string) => Promise<void>;
+
+  addExperience: (exp: Experience) => Promise<void>;
+  updateExperience: (exp: Experience) => Promise<void>;
+  deleteExperience: (expId: string) => Promise<void>;
+
+  addProject: (proj: Project) => Promise<void>;
+  updateProject: (proj: Project) => Promise<void>;
+  deleteProject: (projId: string) => Promise<void>;
+
+  addSkill: (skill: Skill) => Promise<void>;
+  updateSkill: (skill: Skill) => Promise<void>;
+  deleteSkill: (skillId: string) => Promise<void>;
+
+  addSocialLink: (link: SocialLink) => Promise<void>;
+  updateSocialLink: (link: SocialLink) => Promise<void>;
+  deleteSocialLink: (linkPlatform: string) => Promise<void>;
+
+  sendMessage: (msg: ContactMessageRequest) => Promise<void>;
+  deleteMessage: (msgId: string) => Promise<void>;
+  markMessageAsRead: (msgId: string) => void;
 }
-
-// Default data
-const defaultProfile: Profile = {
-  fullName: "Alex Johnson",
-  title: "Full Stack Developer",
-  introduction: "Passionate about creating beautiful, functional web experiences that make a difference.",
-  email: "alex.johnson@example.com",
-  phone: "+1 (555) 123-4567",
-  location: "San Francisco, CA",
-  bio: "I'm a Computer Science student with a passion for web development and creating user-friendly applications.",
-  objectives: "Seeking opportunities to apply my skills in a dynamic environment while continuing to grow as a developer.",
-  interests: ["Web Development", "UI/UX Design", "Open Source", "Machine Learning"],
-  hobbies: ["Photography", "Hiking", "Reading", "Gaming"],
-};
-
-const defaultEducation: Education[] = [
-  {
-    id: "1",
-    institution: "Stanford University",
-    degree: "Bachelor of Science",
-    field: "Computer Science",
-    startYear: "2021",
-    endYear: "2025",
-    achievements: ["Dean's List 2022-2023", "GPA: 3.8/4.0"],
-  },
-];
-
-const defaultSkills: Skill[] = [
-  { id: "1", name: "React", level: 90, category: "technical" },
-  { id: "2", name: "TypeScript", level: 85, category: "technical" },
-  { id: "3", name: "Node.js", level: 80, category: "technical" },
-  { id: "4", name: "Problem Solving", level: 95, category: "soft" },
-  { id: "5", name: "Communication", level: 90, category: "soft" },
-];
-
-const defaultProjects: Project[] = [
-  {
-    id: "1",
-    title: "E-Commerce Platform",
-    description: "A full-stack e-commerce solution with payment integration.",
-    technologies: ["React", "Node.js", "MongoDB", "Stripe"],
-    githubUrl: "https://github.com",
-    liveUrl: "https://example.com",
-    featured: true,
-  },
-  {
-    id: "2",
-    title: "Task Management App",
-    description: "A collaborative task management application with real-time updates.",
-    technologies: ["React", "Firebase", "Tailwind CSS"],
-    githubUrl: "https://github.com",
-    liveUrl: "https://example.com",
-    featured: true,
-  },
-];
-
-const defaultExperiences: Experience[] = [
-  {
-    id: "1",
-    title: "Software Engineering Intern",
-    company: "Tech Startup Inc.",
-    type: "internship",
-    startDate: "2023-06",
-    endDate: "2023-08",
-    current: false,
-    description: "Developed features for the main product using React and Node.js.",
-    achievements: ["Improved app performance by 25%", "Led a team of 3 interns"],
-  },
-];
-
-const defaultSocialLinks: SocialLink[] = [
-  { id: "1", platform: "GitHub", url: "https://github.com", icon: "github" },
-  { id: "2", platform: "LinkedIn", url: "https://linkedin.com", icon: "linkedin" },
-  { id: "3", platform: "Twitter", url: "https://twitter.com", icon: "twitter" },
-];
-
-const defaultMessages: ContactMessage[] = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    message: "Hi Alex, I saw your portfolio and I'm impressed! Would you be interested in a freelance project?",
-    date: "2024-01-10",
-    read: false,
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@company.com",
-    message: "We have an opening for a junior developer position. Your skills match what we're looking for!",
-    date: "2024-01-08",
-    read: true,
-  },
-];
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined);
 
-// Simple password for demo (in production, use proper authentication)
-const ADMIN_PASSWORD = "admin123";
-
 export const AdminProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [profile, setProfile] = useState<Profile>(defaultProfile);
-  const [education, setEducation] = useState<Education[]>(defaultEducation);
-  const [skills, setSkills] = useState<Skill[]>(defaultSkills);
-  const [projects, setProjects] = useState<Project[]>(defaultProjects);
-  const [experiences, setExperiences] = useState<Experience[]>(defaultExperiences);
-  const [socialLinks, setSocialLinks] = useState<SocialLink[]>(defaultSocialLinks);
-  const [messages, setMessages] = useState<ContactMessage[]>(defaultMessages);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [education, setEducation] = useState<Education[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [messages, setMessages] = useState<ContactMessage[]>([]);
 
-  // Load data from localStorage on mount
-  useEffect(() => {
-    const savedAuth = localStorage.getItem("admin_authenticated");
-    if (savedAuth === "true") setIsAuthenticated(true);
+  // ---------------- LOGIN ----------------
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      const { token, user } = await adminApi.login(username, password);
+      if (user.role !== "ADMIN") return false;
 
-    const savedProfile = localStorage.getItem("portfolio_profile");
-    if (savedProfile) setProfile(JSON.parse(savedProfile));
+      localStorage.setItem("auth_token", token);
+      localStorage.setItem("auth_user", JSON.stringify(user));
 
-    const savedEducation = localStorage.getItem("portfolio_education");
-    if (savedEducation) setEducation(JSON.parse(savedEducation));
-
-    const savedSkills = localStorage.getItem("portfolio_skills");
-    if (savedSkills) setSkills(JSON.parse(savedSkills));
-
-    const savedProjects = localStorage.getItem("portfolio_projects");
-    if (savedProjects) setProjects(JSON.parse(savedProjects));
-
-    const savedExperiences = localStorage.getItem("portfolio_experiences");
-    if (savedExperiences) setExperiences(JSON.parse(savedExperiences));
-
-    const savedSocialLinks = localStorage.getItem("portfolio_socialLinks");
-    if (savedSocialLinks) setSocialLinks(JSON.parse(savedSocialLinks));
-
-    const savedMessages = localStorage.getItem("portfolio_messages");
-    if (savedMessages) setMessages(JSON.parse(savedMessages));
-  }, []);
-
-  // Save to localStorage helpers
-  const saveToStorage = (key: string, data: unknown) => {
-    localStorage.setItem(key, JSON.stringify(data));
-  };
-
-  const login = (password: string): boolean => {
-    if (password === ADMIN_PASSWORD) {
+      await refreshData();
       setIsAuthenticated(true);
-      localStorage.setItem("admin_authenticated", "true");
       return true;
+    } catch (err) {
+      console.error("Login failed:", err);
+      return false;
     }
-    return false;
   };
 
   const logout = () => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
     setIsAuthenticated(false);
-    localStorage.removeItem("admin_authenticated");
+
+    setProfile(null);
+    setEducation([]);
+    setSkills([]);
+    setProjects([]);
+    setExperiences([]);
+    setSocialLinks([]);
+    setMessages([]);
   };
 
-  const updateProfile = (newProfile: Profile) => {
-    setProfile(newProfile);
-    saveToStorage("portfolio_profile", newProfile);
+  // ---------------- REFRESH DATA ----------------
+  const refreshData = async () => {
+    const token = localStorage.getItem("auth_token");
+    if (!token) return;
+
+    try {
+      const [p, ed, sk, pr, ex, sl, msg] = await Promise.all([
+        adminApi.getProfile(),
+        adminApi.getEducations(),
+        adminApi.getSkills(),
+        adminApi.getProjects(),
+        adminApi.getExperiences(),
+        adminApi.getSocialLinks(),
+        adminApi.getMessages(),
+      ]);
+
+      setProfile(p);
+      setEducation(ed);
+      setSkills(sk);
+      setProjects(pr);
+      setExperiences(ex);
+      setSocialLinks(sl);
+      setMessages(msg);
+    } catch (err) {
+      console.error("Failed to refresh admin data", err);
+      logout();
+    }
   };
 
-  const addEducation = (edu: Education) => {
-    const updated = [...education, edu];
-    setEducation(updated);
-    saveToStorage("portfolio_education", updated);
+  // ---------------- AUTO LOGIN ----------------
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    const userStr = localStorage.getItem("auth_user");
+    if (!token || !userStr) return;
+
+    const user = JSON.parse(userStr);
+    if (user.role === "ADMIN") {
+      setIsAuthenticated(true);
+      refreshData();
+    }
+  }, []);
+
+  // ---------------- PROFILE CRUD ----------------
+  const addProfile = async (profile: Profile) => {
+    const created = await adminApi.createProfile(profile);
+    setProfile(created);
   };
 
-  const updateEducation = (id: string, edu: Education) => {
-    const updated = education.map((e) => (e.id === id ? edu : e));
-    setEducation(updated);
-    saveToStorage("portfolio_education", updated);
+  const updateProfile = async (profile: Profile) => {
+    if (!profile.id) throw new Error("Profile must have an ID to update");
+    const updated = await adminApi.updateProfile(profile);
+    setProfile(updated);
   };
 
-  const deleteEducation = (id: string) => {
-    const updated = education.filter((e) => e.id !== id);
-    setEducation(updated);
-    saveToStorage("portfolio_education", updated);
+  const deleteProfile = async () => {
+    if (!profile?.id) throw new Error("No profile to delete");
+    await adminApi.deleteProfile(profile.id);
+    setProfile(null);
+  }
+
+  // ---------------- EDUCATION CRUD ----------------
+  const addEducation = async (edu: Education) => {
+    const created = await adminApi.createEducation(edu);
+    setEducation((prev) => [...prev, created]);
   };
 
-  const addSkill = (skill: Skill) => {
-    const updated = [...skills, skill];
-    setSkills(updated);
-    saveToStorage("portfolio_skills", updated);
+  const updateEducation = async (edu: Education) => {
+    if (!edu.id) throw new Error("Education must have an ID to update");
+    const updated = await adminApi.updateEducation(edu.id, edu);
+    setEducation((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
   };
 
-  const updateSkill = (id: string, skill: Skill) => {
-    const updated = skills.map((s) => (s.id === id ? skill : s));
-    setSkills(updated);
-    saveToStorage("portfolio_skills", updated);
+  const deleteEducation = async (eduId: string) => {
+    await adminApi.deleteEducation(eduId);
+    setEducation((prev) => prev.filter((e) => e.id !== eduId));
   };
 
-  const deleteSkill = (id: string) => {
-    const updated = skills.filter((s) => s.id !== id);
-    setSkills(updated);
-    saveToStorage("portfolio_skills", updated);
+  // ---------------- EXPERIENCE CRUD ----------------
+  const addExperience = async (exp: Experience) => {
+    const created = await adminApi.createExperience(exp);
+    setExperiences((prev) => [...prev, created]);
   };
 
-  const addProject = (project: Project) => {
-    const updated = [...projects, project];
-    setProjects(updated);
-    saveToStorage("portfolio_projects", updated);
+  const updateExperience = async (exp: Experience) => {
+    if (!exp.id) throw new Error("Experience must have an ID to update");
+    const updated = await adminApi.updateExperience(exp.id, exp);
+    setExperiences((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
   };
 
-  const updateProject = (id: string, project: Project) => {
-    const updated = projects.map((p) => (p.id === id ? project : p));
-    setProjects(updated);
-    saveToStorage("portfolio_projects", updated);
+  const deleteExperience = async (expId: string) => {
+    await adminApi.deleteExperience(expId);
+    setExperiences((prev) => prev.filter((e) => e.id !== expId));
   };
 
-  const deleteProject = (id: string) => {
-    const updated = projects.filter((p) => p.id !== id);
-    setProjects(updated);
-    saveToStorage("portfolio_projects", updated);
+  // ---------------- PROJECT CRUD ----------------
+  const addProject = async (proj: Project) => {
+    const created = await adminApi.createProject(proj);
+    setProjects((prev) => [...prev, created]);
   };
 
-  const addExperience = (exp: Experience) => {
-    const updated = [...experiences, exp];
-    setExperiences(updated);
-    saveToStorage("portfolio_experiences", updated);
+  const updateProject = async (proj: Project) => {
+    if (!proj.id) throw new Error("Project must have an ID to update");
+    const updated = await adminApi.updateProject(proj.id, proj);
+    setProjects((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
   };
 
-  const updateExperience = (id: string, exp: Experience) => {
-    const updated = experiences.map((e) => (e.id === id ? exp : e));
-    setExperiences(updated);
-    saveToStorage("portfolio_experiences", updated);
+  const deleteProject = async (projId: string) => {
+    await adminApi.deleteProject(projId);
+    setProjects((prev) => prev.filter((p) => p.id !== projId));
   };
 
-  const deleteExperience = (id: string) => {
-    const updated = experiences.filter((e) => e.id !== id);
-    setExperiences(updated);
-    saveToStorage("portfolio_experiences", updated);
+  // ---------------- SKILL CRUD ----------------
+  const addSkill = async (skill: Skill) => {
+    const created = await adminApi.createSkill(skill);
+    setSkills((prev) => [...prev, created]);
   };
 
-  const addSocialLink = (link: SocialLink) => {
-    const updated = [...socialLinks, link];
-    setSocialLinks(updated);
-    saveToStorage("portfolio_socialLinks", updated);
+  const updateSkill = async (skill: Skill) => {
+    if (!skill.id) throw new Error("Skill must have an ID to update");
+    const updated = await adminApi.updateSkill(skill.id, skill);
+    setSkills((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   };
 
-  const updateSocialLink = (id: string, link: SocialLink) => {
-    const updated = socialLinks.map((l) => (l.id === id ? link : l));
-    setSocialLinks(updated);
-    saveToStorage("portfolio_socialLinks", updated);
+  const deleteSkill = async (skillId: string) => {
+    await adminApi.deleteSkill(skillId);
+    setSkills((prev) => prev.filter((s) => s.id !== skillId));
   };
 
-  const deleteSocialLink = (id: string) => {
-    const updated = socialLinks.filter((l) => l.id !== id);
-    setSocialLinks(updated);
-    saveToStorage("portfolio_socialLinks", updated);
+  // ---------------- SOCIAL LINK CRUD ----------------
+  const addSocialLink = async (link: SocialLink) => {
+    const created = await adminApi.createSocialLink(link);
+    setSocialLinks((prev) => [...prev, created]);
   };
 
-  const markMessageAsRead = (id: string) => {
-    const updated = messages.map((m) => (m.id === id ? { ...m, read: true } : m));
-    setMessages(updated);
-    saveToStorage("portfolio_messages", updated);
+  const updateSocialLink = async (link: SocialLink) => {
+    const updated = await adminApi.updateSocialLink(link.platform, link);
+    setSocialLinks((prev) =>
+      prev.map((s) => (s.platform === updated.platform ? updated : s))
+    );
   };
 
-  const deleteMessage = (id: string) => {
-    const updated = messages.filter((m) => m.id !== id);
-    setMessages(updated);
-    saveToStorage("portfolio_messages", updated);
+  const deleteSocialLink = async (linkPlatform: string) => {
+    await adminApi.deleteSocialLink(linkPlatform);
+    setSocialLinks((prev) => prev.filter((s) => s.platform !== linkPlatform));
   };
+
+  // ---------------- CONTACT MESSAGE ----------------
+  const sendMessage = async (msg: ContactMessageRequest) => {
+    await adminApi.sendContactMessage(msg);
+  }
+
+  const deleteMessage = async (msgId: string) => {
+    await adminApi.deleteMessage(msgId);
+    setMessages((prev) => prev.filter((m) => m.id !== msgId));
+  };
+
+  const markMessageAsRead = (msgId: string) => {
+    setMessages((prev) =>
+      prev.map((m) => (m.id === msgId ? { ...m, read: true } : m))
+    );
+  };
+
+  const contextValue = useMemo(
+    () => ({
+      isAuthenticated,
+      login,
+      logout,
+      profile,
+      education,
+      skills,
+      projects,
+      experiences,
+      socialLinks,
+      messages,
+      refreshData,
+      addProfile,
+      updateProfile,
+      deleteProfile,
+      addEducation,
+      updateEducation,
+      deleteEducation,
+      addExperience,
+      updateExperience,
+      deleteExperience,
+      addProject,
+      updateProject,
+      deleteProject,
+      addSkill,
+      updateSkill,
+      deleteSkill,
+      addSocialLink,
+      updateSocialLink,
+      deleteSocialLink,
+      sendMessage,
+      deleteMessage,
+      markMessageAsRead,
+    }),
+    [
+      isAuthenticated,
+      login,
+      logout,
+      profile,
+      education,
+      skills,
+      projects,
+      experiences,
+      socialLinks,
+      messages,
+      refreshData,
+      addProfile,
+      updateProfile,
+      deleteProfile,
+      addEducation,
+      updateEducation,
+      deleteEducation,
+      addExperience,
+      updateExperience,
+      deleteExperience,
+      addProject,
+      updateProject,
+      deleteProject,
+      addSkill,
+      updateSkill,
+      deleteSkill,
+      addSocialLink,
+      updateSocialLink,
+      deleteSocialLink,
+      sendMessage,
+      deleteMessage,
+      markMessageAsRead,
+    ]
+  );
 
   return (
     <AdminContext.Provider
-      value={{
-        isAuthenticated,
-        login,
-        logout,
-        profile,
-        education,
-        skills,
-        projects,
-        experiences,
-        socialLinks,
-        messages,
-        updateProfile,
-        addEducation,
-        updateEducation,
-        deleteEducation,
-        addSkill,
-        updateSkill,
-        deleteSkill,
-        addProject,
-        updateProject,
-        deleteProject,
-        addExperience,
-        updateExperience,
-        deleteExperience,
-        addSocialLink,
-        updateSocialLink,
-        deleteSocialLink,
-        markMessageAsRead,
-        deleteMessage,
-      }}
+      value={contextValue}
     >
       {children}
     </AdminContext.Provider>
@@ -407,8 +333,6 @@ export const AdminProvider = ({ children }: { children: ReactNode }) => {
 
 export const useAdmin = () => {
   const context = useContext(AdminContext);
-  if (!context) {
-    throw new Error("useAdmin must be used within an AdminProvider");
-  }
+  if (!context) throw new Error("useAdmin must be used within an AdminProvider");
   return context;
 };

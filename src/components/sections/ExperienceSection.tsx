@@ -1,72 +1,47 @@
 /**
  * Experience Section
- * Work experience, internships, and volunteering activities
+ * Work experience and internships fetched from the backend
  */
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, Calendar, MapPin } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-const ExperienceSection = () => {
-  // Experience data
-  const experiences = [
-    {
-      type: "Full-time",
-      title: "Junior Full Stack Developer",
-      company: "TechStart Inc.",
-      location: "San Francisco, CA",
-      period: "Jan 2023 - Present",
-      description:
-        "Developing and maintaining web applications for enterprise clients.",
-      responsibilities: [
-        "Developed React-based frontend applications",
-        "Built RESTful APIs using Node.js",
-        "Participated in code reviews and agile ceremonies",
-      ],
-      technologies: ["React", "Node.js", "PostgreSQL", "AWS"],
-    },
-    {
-      type: "Internship",
-      title: "Software Engineering Intern",
-      company: "InnovateTech Labs",
-      location: "Palo Alto, CA",
-      period: "Jun 2022 - Dec 2022",
-      description:
-        "Contributed to machine learning platform development.",
-      responsibilities: [
-        "Assisted in developing ML pipeline components",
-        "Created interactive data visualizations",
-        "Wrote unit and integration tests",
-      ],
-      technologies: ["Python", "TensorFlow", "React"],
-    },
-    {
-      type: "Volunteer",
-      title: "Tech Mentor",
-      company: "Code for Good Foundation",
-      location: "Remote",
-      period: "Jan 2021 - Present",
-      description:
-        "Mentoring underrepresented students in programming.",
-      responsibilities: [
-        "Mentored 10+ students in web development",
-        "Created curriculum for beginner workshops",
-        "Helped students prepare for interviews",
-      ],
-      technologies: ["HTML/CSS", "JavaScript", "React"],
-    },
-  ];
+import { fetchExperiences } from "@/libs/api";
+import type { Experience } from "@/types";
 
+const ExperienceSection = () => {
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchExperiences()
+      .then(setExperiences)
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Map API "type" to UI variants
   const getTypeVariant = (type: string) => {
     switch (type) {
-      case "Full-time": return "default";
-      case "Internship": return "secondary";
-      case "Volunteer": return "outline";
+      case "JOB": return "default";
+      case "INTERNSHIP": return "secondary";
+      case "VOLUNTEER": return "outline";
       default: return "secondary";
     }
   };
+
+  // Helper to format dates
+  const formatDate = (dateString: string) => {
+    if (dateString.toLowerCase() === "present") return "Present";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+  };
+
+  if (loading) return null;
 
   return (
     <section id="experience" className="py-20 bg-secondary/30">
@@ -76,68 +51,63 @@ const ExperienceSection = () => {
           subtitle="My professional journey and contributions"
         />
 
-        {/* Experience Timeline */}
         <div className="max-w-4xl mx-auto space-y-6">
-          {experiences.map((exp, index) => (
-            <motion.div
-              key={`${exp.company}-${exp.title}`}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card className="overflow-hidden">
-                <CardContent className="pt-6">
-                  {/* Header */}
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                    <Badge variant={getTypeVariant(exp.type)}>{exp.type}</Badge>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <Calendar className="h-4 w-4" />
-                      <span>{exp.period}</span>
+          {experiences.length > 0 ? (
+            experiences.map((exp, index) => (
+              <motion.div
+                key={`${exp.company}-${exp.role}-${index}`}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <Card className="overflow-hidden border-l-4 border-l-accent">
+                  <CardContent className="pt-6">
+                    {/* Header: Type and Date */}
+                    <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+                      <Badge variant={getTypeVariant(exp.type)}>
+                        {exp.type.replace("_", " ")}
+                      </Badge>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground bg-background/50 px-3 py-1 rounded-full">
+                        <Calendar className="h-4 w-4 text-accent" />
+                        <span>
+                          {formatDate(exp.startDate)} — {formatDate(exp.endDate)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Title and Company */}
-                  <h3 className="font-heading text-xl font-semibold mb-1">{exp.title}</h3>
-                  <div className="flex flex-wrap items-center gap-3 mb-3">
-                    <span className="font-body font-medium text-accent">{exp.company}</span>
-                    <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MapPin className="h-4 w-4" />
-                      <span>{exp.location}</span>
+                    {/* Role and Company */}
+                    <div className="mb-4">
+                      <h3 className="font-heading text-2xl font-semibold mb-1">
+                        {exp.role}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <span className="font-body font-bold text-accent text-lg">
+                          {exp.company}
+                        </span>
+                        {/* Note: Your API screenshot shows location in Profile but not Experience, 
+                            so we'll default to a placeholder or omit if preferred */}
+                        <div className="hidden sm:flex items-center gap-1 text-sm text-muted-foreground ml-2">
+                          <MapPin className="h-3 w-3" />
+                          <span>Phnom Penh, Cambodia</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Description */}
-                  <p className="font-body text-muted-foreground mb-4 leading-relaxed">
-                    {exp.description}
-                  </p>
-
-                  {/* Responsibilities */}
-                  <div className="mb-4">
-                    <h4 className="font-heading font-medium text-sm mb-2 flex items-center gap-2">
-                      <Briefcase className="h-4 w-4 text-accent" />
-                      Key Responsibilities
-                    </h4>
-                    <ul className="space-y-1">
-                      {exp.responsibilities.map((resp, i) => (
-                        <li key={i} className="font-body text-sm text-muted-foreground flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent mt-1.5 shrink-0" />
-                          {resp}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Technologies */}
-                  <div className="flex flex-wrap gap-2">
-                    {exp.technologies.map((tech) => (
-                      <Badge key={tech} variant="secondary" className="text-xs">{tech}</Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    {/* Description */}
+                    <div className="relative pl-6 border-l border-border/50">
+                       <Briefcase className="absolute -left-3 top-0 h-6 w-6 p-1 bg-background border border-border rounded-full text-accent" />
+                       <p className="font-body text-muted-foreground leading-relaxed whitespace-pre-line">
+                        {exp.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))
+          ) : (
+            <p className="text-center text-muted-foreground py-10">No experience records found.</p>
+          )}
         </div>
       </div>
     </section>

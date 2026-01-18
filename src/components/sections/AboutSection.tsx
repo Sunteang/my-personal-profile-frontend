@@ -1,25 +1,37 @@
 /**
  * About Section
- * Personal background, career objectives, interests, and biography
+ * Personal background, career objectives, and biography fetched from API
  */
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, Target, Lightbulb } from "lucide-react";
 import SectionHeader from "@/components/SectionHeader";
 import { Card, CardContent } from "@/components/ui/card";
+import { fetchProfile } from "@/libs/api";
+import type { Profile } from "@/types";
 
 const AboutSection = () => {
-  // Interests and hobbies data
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProfile()
+      .then((data) => {
+        setProfile(data);
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
   const interests = [
-    { icon: "🎮", label: "Gaming" },
-    { icon: "📚", label: "Reading" },
-    { icon: "🎵", label: "Music" },
-    { icon: "✈️", label: "Traveling" },
-    { icon: "📷", label: "Photography" },
+    { icon: "💻", label: "Coding" },
     { icon: "☕", label: "Coffee" },
+    { icon: "🎵", label: "Music" },
+    { icon: "🎮", label: "Gaming" },
+    { icon: "✈️", label: "Learning" },
   ];
 
-  // Core values
   const values = [
     {
       icon: Target,
@@ -29,14 +41,28 @@ const AboutSection = () => {
     {
       icon: Heart,
       title: "Passionate",
-      description: "I love what I do and it shows in every project I undertake.",
+      description: "I love building software that solves real-world problems.",
     },
     {
       icon: Lightbulb,
       title: "Creative",
-      description: "I find innovative solutions to complex problems.",
+      description: "I find innovative solutions to complex technical challenges.",
     },
   ];
+
+  if (loading) {
+    return (
+      <section id="about" className="py-20 bg-secondary/30">
+        <div className="container mx-auto px-4">
+          <SectionHeader
+            title="About Me"
+            subtitle="Get to know me better - my background, aspirations, and what drives me"
+          />
+          <p className="text-center text-muted-foreground">Loading...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="about" className="py-20 bg-secondary/30">
@@ -46,59 +72,37 @@ const AboutSection = () => {
           subtitle="Get to know me better - my background, aspirations, and what drives me"
         />
 
-        {/* Biography */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto mb-12"
-        >
-          <h3 className="font-heading text-2xl font-semibold mb-4 text-center">My Story</h3>
-          <div className="font-body text-muted-foreground space-y-4 leading-relaxed text-center">
-            <p>
-              I'm a passionate full-stack developer with a deep love for creating 
-              beautiful, functional web applications. My journey in tech started 
-              during my university years when I built my first website, and I've 
-              been hooked ever since.
-            </p>
-            <p>
-              With a background in Computer Science and several years of hands-on 
-              experience, I've developed a keen eye for design and a solid foundation 
-              in both frontend and backend technologies. I believe that great software 
-              is not just about code—it's about solving real problems for real people.
-            </p>
-          </div>
-        </motion.div>
+        {/* Biography (From API) */}
+        {profile?.biography && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto mb-12"
+          >
+            <h3 className="font-heading text-2xl font-semibold mb-4 text-center">My Story</h3>
+            <div className="font-body text-muted-foreground leading-relaxed text-center">
+              <p>{profile.biography}</p>
+            </div>
+          </motion.div>
+        )}
 
-        {/* Career Objectives */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="max-w-4xl mx-auto mb-12"
-        >
-          <h3 className="font-heading text-2xl font-semibold mb-4 text-center">Career Objectives</h3>
-          <div className="font-body text-muted-foreground leading-relaxed text-center">
-            <p className="mb-4">
-              My goal is to continue growing as a developer while making meaningful 
-              contributions to innovative projects. I'm particularly interested in:
-            </p>
-            <ul className="inline-block text-left space-y-2">
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Building scalable, user-centric applications
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Exploring emerging technologies like AI and Web3
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                Leading and mentoring development teams
-              </li>
-            </ul>
-          </div>
-        </motion.div>
+        {/* Career Objectives (From API) */}
+        {profile?.careerObjective && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-4xl mx-auto mb-12"
+          >
+            <h3 className="font-heading text-2xl font-semibold mb-4 text-center">Career Objectives</h3>
+            <div className="font-body text-muted-foreground leading-relaxed text-center p-6 bg-card rounded-2xl border border-border shadow-sm">
+              <p className="italic text-foreground">
+                "{profile.careerObjective}"
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Core Values */}
         <div className="grid md:grid-cols-3 gap-6 mb-12">

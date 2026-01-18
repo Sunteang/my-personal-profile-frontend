@@ -3,13 +3,25 @@
  * Landing section with welcome message, name, intro, and profile photo
  */
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowDown, Download, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import profilePhoto from "@/assets/profile-photo.jpg";
+import profilePhoto from "@/assets/my-profile.png";
 import heroPattern from "@/assets/hero-pattern.jpg";
 
+import { fetchProfile } from "@/libs/api";
+import type { Profile } from "@/types";
+
 const HeroSection = () => {
+  const [profile, setProfile] = useState<Profile | null>(null);
+
+  useEffect(() => {
+    fetchProfile()
+      .then(setProfile)
+      .catch(console.error);
+  }, []);
+
   const scrollToContact = () => {
     document.getElementById("contact")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -47,7 +59,7 @@ const HeroSection = () => {
 
             {/* Name */}
             <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-semibold text-foreground mb-6 leading-tight">
-              Alex Johnson
+              {profile?.fullName || "N/A"}
             </h1>
 
             {/* Role */}
@@ -57,7 +69,7 @@ const HeroSection = () => {
               transition={{ delay: 0.5 }}
               className="font-heading text-xl sm:text-2xl text-muted-foreground mb-6"
             >
-              Full Stack Developer & UI/UX Enthusiast
+              {profile?.title || "N/A"}
             </motion.p>
 
             {/* Introduction */}
@@ -67,9 +79,7 @@ const HeroSection = () => {
               transition={{ delay: 0.6 }}
               className="font-body text-lg text-muted-foreground mb-8 max-w-xl leading-relaxed"
             >
-              I create beautiful, user-friendly web applications with a focus on
-              clean code and exceptional user experiences. Passionate about turning
-              complex problems into elegant solutions.
+              {profile?.shortIntro}
             </motion.p>
 
             {/* CTA Buttons */}
@@ -84,7 +94,7 @@ const HeroSection = () => {
                 Get in Touch
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <a href="#" download>
+                <a href="/Resume.pdf" download>
                   <Download className="h-5 w-5 mr-2" />
                   Download CV
                 </a>
@@ -107,7 +117,7 @@ const HeroSection = () => {
               <div className="relative w-64 h-64 sm:w-80 sm:h-80 lg:w-96 lg:h-96 rounded-full overflow-hidden border-4 border-card shadow-lg">
                 <img
                   src={profilePhoto}
-                  alt="Alex Johnson - Full Stack Developer"
+                  alt="Sunteang Serey - Full Stack Developer"
                   className="w-full h-full object-cover"
                 />
               </div>

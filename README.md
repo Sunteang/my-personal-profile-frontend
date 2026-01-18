@@ -1,73 +1,70 @@
-# Welcome to your Lovable project
+# Serey Sun Teang — Personal Portfolio
 
-## Project info
+This repository contains my personal portfolio website. It highlights my projects, skills, education, experience, and ways to contact me. The site is built with modern web tooling and a small admin area for content management.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## About me
 
-## How can I edit this code?
+- **Name:** Serey Sun Teang (replace with preferred display name)
+- **Title:** Frontend Developer / Software Engineer (replace with your role)
+- **Short bio:** A concise 1–2 sentence summary about you — what you build, technologies you love, and what you're currently working on. Replace this line with your personal bio.
 
-There are several ways of editing your application.
+## What this project is
 
-**Use Lovable**
+This repository is a personal portfolio website that showcases:
+- Projects with screenshots and links
+- A summary of skills and proficiency
+- Experience and education
+- Contact information and social links
+- A small admin area for managing content (under `src/pages/admin/`)
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- Clean, responsive design using Tailwind CSS
+- Component-driven UI with reusable sections
+- TypeScript + React for type-safety and reliability
+- Admin pages for managing portfolio content
 
-**Use your preferred IDE**
+## Tech stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Vite
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn-ui
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## Where to update content (quick guide)
 
-Follow these steps:
+- Hero / Intro: `src/sections/HeroSection.tsx`
+- About: `src/sections/AboutSection.tsx`
+- Projects: `src/sections/ProjectsSection.tsx` and `src/components/ProjectCard.tsx`
+- Skills: `src/sections/SkillsSection.tsx` and `src/components/SkillBar.tsx`
+- Experience: `src/sections/ExperienceSection.tsx`
+- Education: `src/sections/EducationSection.tsx`
+- Contact: `src/sections/ContactSection.tsx`
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Open those files to edit text, replace images in `public/images/projects/`, and update any links.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## Development (brief)
 
-# Step 3: Install the necessary dependencies.
-npm i
+Run the development server with hot reload (if you want to preview locally):
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Note: This README intentionally omits repository cloning instructions.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## Contact & socials
 
-**Use GitHub Codespaces**
+- **Email:** your@email.com (replace)
+- **LinkedIn:** https://linkedin.com/in/your-profile (replace)
+- **GitHub:** https://github.com/your-username (replace)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Next steps I can help with
 
-## What technologies are used for this project?
+- Fill in your real name, bio, and contact info in this README
+- Add project entries and images to `public/images/projects/`
+- Update the live demo URL when deployed
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+If you'd like, tell me the exact text for your name, bio, role, and contact links and I'll fill them in across the README and Hero section.

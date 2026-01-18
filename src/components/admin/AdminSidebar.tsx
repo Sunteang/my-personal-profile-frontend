@@ -45,16 +45,14 @@ const AdminSidebar = () => {
     <motion.aside
       initial={{ x: -100, opacity: 0 }}
       animate={{ x: 0, opacity: 1 }}
-      className="w-64 bg-card border-r border-border min-h-screen flex flex-col"
+      className="w-64 bg-card border-r border-border h-full flex flex-col flex-shrink-0"
     >
-      {/* Header */}
-      <div className="p-6 border-b border-border">
+      <div className="p-6 border-b border-border flex-shrink-0">
         <h2 className="font-heading text-xl font-semibold">Admin Panel</h2>
         <p className="text-sm text-muted-foreground mt-1">Content Management</p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 p-4 space-y-1">
+      <nav className="flex-1 overflow-auto p-4 space-y-1">
         {navItems.map((item) => (
           <NavLink
             key={item.path}
@@ -79,7 +77,7 @@ const AdminSidebar = () => {
       </nav>
 
       {/* Footer Actions */}
-      <div className="p-4 border-t border-border space-y-2">
+      <div className="p-4 border-t border-border flex-shrink-0 space-y-2">
         <Button
           variant="ghost"
           className="w-full justify-start"

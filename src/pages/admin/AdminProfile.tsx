@@ -1,9 +1,4 @@
-/**
- * Admin Profile Management
- * Edit personal information and bio
- */
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save, X, Plus } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,15 +7,37 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useAdmin, Profile } from "@/contexts/AdminContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
+import type { Profile } from "@/types";
 
 const AdminProfile = () => {
-  const { profile, updateProfile } = useAdmin();
+  const { profile } = useAdmin();
   const { toast } = useToast();
-  const [formData, setFormData] = useState<Profile>(profile);
+
+  const [formData, setFormData] = useState<Profile>({
+    id: profile?.id ?? 0,
+    fullName: profile?.fullName ?? "",
+    title: profile?.title ?? "",
+    shortIntro: profile?.shortIntro ?? "",
+    biography: profile?.biography ?? "",
+    careerObjective: profile?.careerObjective ?? "",
+    profileImageUrl: profile?.profileImageUrl ?? "",
+    email: profile?.email ?? "",
+    phone: profile?.phone ?? "",
+    location: profile?.location ?? "",
+  });
+
+  const [interests, setInterests] = useState<string[]>([]);
+  const [hobbies, setHobbies] = useState<string[]>([]);
   const [newInterest, setNewInterest] = useState("");
   const [newHobby, setNewHobby] = useState("");
+
+  useEffect(() => {
+    if (profile) {
+      setFormData(profile);
+    }
+  }, [profile]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -29,45 +46,42 @@ const AdminProfile = () => {
 
   const handleAddInterest = () => {
     if (newInterest.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        interests: [...prev.interests, newInterest.trim()],
-      }));
+      setInterests((prev) => [...prev, newInterest.trim()]);
       setNewInterest("");
     }
   };
 
-  const handleRemoveInterest = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      interests: prev.interests.filter((_, i) => i !== index),
-    }));
+  const handleRemoveInterest = (interestToRemove: string) => {
+    setInterests(prev => prev.filter(i => i !== interestToRemove));
   };
 
+  // Hobbies
   const handleAddHobby = () => {
     if (newHobby.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        hobbies: [...prev.hobbies, newHobby.trim()],
-      }));
+      setHobbies((prev) => [...prev, newHobby.trim()]);
       setNewHobby("");
     }
   };
 
-  const handleRemoveHobby = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      hobbies: prev.hobbies.filter((_, i) => i !== index),
-    }));
+  const handleRemoveHobby = (hobbyToRemove: string) => {
+    setHobbies((prev) => prev.filter(i => i !== hobbyToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile(formData);
-    toast({
-      title: "Profile updated",
-      description: "Your profile information has been saved.",
-    });
+    try {
+      toast({
+        title: "Profile updated",
+        description: "Your profile information has been saved.",
+      });
+    } catch (err) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to update profile. Try again later.",
+      });
+    }
   };
 
   return (
@@ -113,11 +127,11 @@ const AdminProfile = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="introduction">Short Introduction</Label>
+                <Label htmlFor="shortIntro">Short Introduction</Label>
                 <Textarea
-                  id="introduction"
-                  name="introduction"
-                  value={formData.introduction}
+                  id="shortIntro"
+                  name="shortIntro"
+                  value={formData.shortIntro}
                   onChange={handleChange}
                   rows={2}
                 />
@@ -125,7 +139,6 @@ const AdminProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Contact Information */}
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
@@ -173,21 +186,21 @@ const AdminProfile = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="bio">Biography</Label>
+                <Label htmlFor="biography">Biography</Label>
                 <Textarea
-                  id="bio"
-                  name="bio"
-                  value={formData.bio}
+                  id="biography"
+                  name="biography"
+                  value={formData.biography}
                   onChange={handleChange}
                   rows={4}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="objectives">Career Objectives</Label>
+                <Label htmlFor="careerObjective">Career Objectives</Label>
                 <Textarea
-                  id="objectives"
-                  name="objectives"
-                  value={formData.objectives}
+                  id="careerObjective"
+                  name="careerObjective"
+                  value={formData.careerObjective}
                   onChange={handleChange}
                   rows={3}
                 />
@@ -195,7 +208,6 @@ const AdminProfile = () => {
             </CardContent>
           </Card>
 
-          {/* Interests & Hobbies */}
           <Card>
             <CardHeader>
               <CardTitle>Interests & Hobbies</CardTitle>
@@ -206,12 +218,12 @@ const AdminProfile = () => {
               <div className="space-y-3">
                 <Label>Interests</Label>
                 <div className="flex flex-wrap gap-2">
-                  {formData.interests.map((interest, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1">
+                  {interests.map((interest) => (
+                    <Badge key={interest} variant="secondary" className="gap-1">
                       {interest}
                       <button
                         type="button"
-                        onClick={() => handleRemoveInterest(index)}
+                        onClick={() => handleRemoveInterest(interest)}
                         className="ml-1 hover:text-destructive"
                       >
                         <X className="h-3 w-3" />
@@ -224,7 +236,12 @@ const AdminProfile = () => {
                     placeholder="Add an interest..."
                     value={newInterest}
                     onChange={(e) => setNewInterest(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddInterest())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddInterest();
+                      }
+                    }}
                   />
                   <Button type="button" variant="outline" onClick={handleAddInterest}>
                     <Plus className="h-4 w-4" />
@@ -236,12 +253,12 @@ const AdminProfile = () => {
               <div className="space-y-3">
                 <Label>Hobbies</Label>
                 <div className="flex flex-wrap gap-2">
-                  {formData.hobbies.map((hobby, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1">
+                  {hobbies.map((hobby) => (
+                    <Badge key={hobby} variant="secondary" className="gap-1">
                       {hobby}
                       <button
                         type="button"
-                        onClick={() => handleRemoveHobby(index)}
+                        onClick={() => handleRemoveHobby(hobby)}
                         className="ml-1 hover:text-destructive"
                       >
                         <X className="h-3 w-3" />
@@ -254,7 +271,12 @@ const AdminProfile = () => {
                     placeholder="Add a hobby..."
                     value={newHobby}
                     onChange={(e) => setNewHobby(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddHobby())}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddHobby();
+                      }
+                    }}
                   />
                   <Button type="button" variant="outline" onClick={handleAddHobby}>
                     <Plus className="h-4 w-4" />

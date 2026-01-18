@@ -1,11 +1,6 @@
-/**
- * Admin Messages Management
- * View and manage contact form submissions
- */
-
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trash2, MessageSquare, Mail, Check, Eye } from "lucide-react";
+import { Trash2, MessageSquare, Mail, Check } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,8 +21,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdmin, ContactMessage } from "@/contexts/AdminContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
+import type { ContactMessage } from "@/types";
 
 const AdminMessages = () => {
   const { messages, markMessageAsRead, deleteMessage } = useAdmin();
@@ -52,27 +48,25 @@ const AdminMessages = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (messageToDelete) {
-      deleteMessage(messageToDelete.id);
+      await deleteMessage(messageToDelete.id);
       toast({ title: "Message deleted", description: "The message has been removed." });
     }
     setIsDeleteDialogOpen(false);
   };
 
+  const pluralSuffix = unreadCount > 1 ? "s" : "";
+
   return (
     <div className="p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         {/* Header */}
         <div>
           <h1 className="font-heading text-3xl font-bold">Messages</h1>
           <p className="text-muted-foreground mt-1">
             {unreadCount > 0
-              ? `You have ${unreadCount} unread message${unreadCount > 1 ? "s" : ""}`
+              ? `You have ${unreadCount} unread message${pluralSuffix}`
               : "All messages have been read"}
           </p>
         </div>
@@ -100,7 +94,7 @@ const AdminMessages = () => {
                 >
                   <Card
                     className={`cursor-pointer transition-all duration-200 hover:border-primary/20 ${
-                      !message.read ? "border-primary/30 bg-primary/5" : ""
+                      message.read ? "" : "border-primary/30 bg-primary/5"
                     }`}
                     onClick={() => handleViewMessage(message)}
                   >
@@ -108,9 +102,7 @@ const AdminMessages = () => {
                       <div className="flex items-center gap-3">
                         <div
                           className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                            !message.read
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-muted"
+                            message.read ? "bg-muted" : "bg-primary text-primary-foreground"
                           }`}
                         >
                           <Mail className="h-5 w-5" />
@@ -128,7 +120,9 @@ const AdminMessages = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">{message.date}</span>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(message.createdAt).toLocaleString()}
+                        </span>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -169,7 +163,7 @@ const AdminMessages = () => {
             </DialogHeader>
             <div className="py-4">
               <p className="text-sm text-muted-foreground mb-2">
-                Received on {selectedMessage?.date}
+                Received on {selectedMessage && new Date(selectedMessage.createdAt).toLocaleString()}
               </p>
               <div className="bg-muted/50 rounded-lg p-4">
                 <p className="whitespace-pre-wrap">{selectedMessage?.message}</p>

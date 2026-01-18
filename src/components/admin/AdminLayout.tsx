@@ -10,15 +10,14 @@ import AdminSidebar from "./AdminSidebar";
 const AdminLayout = () => {
   const { isAuthenticated } = useAdmin();
 
-  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/admin" replace />;
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden"> 
       <AdminSidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-y-auto">
         <Outlet />
       </main>
     </div>

@@ -16,10 +16,10 @@ const Portfolio = () => {
   return (
     <>
       <Helmet>
-        <title>Alex Johnson | Full Stack Developer Portfolio</title>
+        <title>Sunteang Serey</title>
         <meta
           name="description"
-          content="Personal portfolio of Alex Johnson, a Full Stack Developer specializing in React, TypeScript, and modern web technologies. View my projects, skills, and experience."
+          content="Personal portfolio of Sunteang Serey, a Full Stack Developer specializing in React, TypeScript, and modern web technologies. View my projects, skills, and experience."
         />
         <meta name="keywords" content="full stack developer, web developer, react, typescript, portfolio" />
       </Helmet>

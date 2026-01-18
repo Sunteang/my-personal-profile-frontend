@@ -21,7 +21,7 @@ const NotFound = () => {
             <Button variant="hero" size="lg" asChild>
               <Link to="/"><Home className="h-5 w-5 mr-2" />Go Home</Link>
             </Button>
-            <Button variant="outline" size="lg" onClick={() => window.history.back()}>
+            <Button variant="outline" size="lg" onClick={() => globalThis.history.back()}>
               <ArrowLeft className="h-5 w-5 mr-2" />Go Back
             </Button>
           </div>

@@ -181,7 +181,7 @@ const AdminDashboard = () => {
                   <div
                     key={message.id}
                     className={`p-4 rounded-lg border ${
-                      !message.read ? "bg-primary/5 border-primary/20" : "border-border"
+                      message.read ? "border-border" : "bg-primary/5 border-primary/20"
                     }`}
                   >
                     <div className="flex items-start justify-between">
@@ -196,7 +196,7 @@ const AdminDashboard = () => {
                         </div>
                         <p className="text-sm text-muted-foreground">{message.email}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground">{message.date}</p>
+                      <p className="text-sm text-muted-foreground">{message.createdAt}</p>
                     </div>
                     <p className="mt-2 text-sm line-clamp-2">{message.message}</p>
                   </div>

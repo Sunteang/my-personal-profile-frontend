@@ -1,16 +1,15 @@
 /**
  * Admin Education Management
- * Add, edit, and delete education records
+ * Add, edit, and delete education records (API-backed)
  */
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Edit2, Trash2, GraduationCap, X, Save } from "lucide-react";
+import { Plus, Edit2, Trash2, GraduationCap, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -29,100 +28,95 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useAdmin, Education } from "@/contexts/AdminContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { useToast } from "@/hooks/use-toast";
+import type { Education } from "@/types";
 
 const emptyEducation: Education = {
   id: "",
-  institution: "",
+  institutionName: "",
   degree: "",
-  field: "",
+  fieldOfStudy: "",
   startYear: "",
   endYear: "",
-  achievements: [],
+  description: "",
 };
 
 const AdminEducation = () => {
   const { education, addEducation, updateEducation, deleteEducation } = useAdmin();
   const { toast } = useToast();
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Education | null>(null);
   const [formData, setFormData] = useState<Education>(emptyEducation);
-  const [newAchievement, setNewAchievement] = useState("");
 
+  // Open create dialog
   const handleOpenCreate = () => {
     setEditingItem(null);
-    setFormData({ ...emptyEducation, id: Date.now().toString() });
+    setFormData(emptyEducation);
     setIsDialogOpen(true);
   };
 
+  // Open edit dialog
   const handleOpenEdit = (edu: Education) => {
     setEditingItem(edu);
     setFormData(edu);
     setIsDialogOpen(true);
   };
 
+  // Open delete dialog
   const handleOpenDelete = (edu: Education) => {
     setEditingItem(edu);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle input change
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleAddAchievement = () => {
-    if (newAchievement.trim()) {
-      setFormData((prev) => ({
-        ...prev,
-        achievements: [...prev.achievements, newAchievement.trim()],
-      }));
-      setNewAchievement("");
+  // Submit form (add or update)
+  const handleSubmit = async () => {
+    try {
+      if (editingItem) {
+        await updateEducation(formData);
+        toast({ title: "Education updated", description: "Record saved successfully." });
+      } else {
+        await addEducation(formData);
+        toast({ title: "Education added", description: "New education record created." });
+      }
+      setIsDialogOpen(false);
+    } catch (err) {
+      console.warn("Failed to save education", err);
+      toast({ title: "Error", description: "Failed to save education.", variant: "destructive" });
     }
   };
 
-  const handleRemoveAchievement = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      achievements: prev.achievements.filter((_, i) => i !== index),
-    }));
-  };
-
-  const handleSubmit = () => {
-    if (editingItem) {
-      updateEducation(formData.id, formData);
-      toast({ title: "Education updated", description: "The record has been saved." });
-    } else {
-      addEducation(formData);
-      toast({ title: "Education added", description: "New education record has been created." });
-    }
-    setIsDialogOpen(false);
-  };
-
-  const handleDelete = () => {
-    if (editingItem) {
-      deleteEducation(editingItem.id);
-      toast({ title: "Education deleted", description: "The record has been removed." });
+ const handleDelete = async () => {
+  try {
+    if (editingItem?.id) {
+      await deleteEducation(editingItem.id);
+      toast({ title: "Education deleted", description: "Record removed successfully." });
     }
     setIsDeleteDialogOpen(false);
-  };
+  } catch (err) {
+    console.warn("Failed to delete education", err);
+    toast({ title: "Error", description: "Failed to delete education.", variant: "destructive" });
+  }
+};
 
   return (
     <div className="p-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-6"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-heading text-3xl font-bold">Education</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage your academic background
-            </p>
+            <p className="text-muted-foreground mt-1">Manage your academic background</p>
           </div>
           <Button onClick={handleOpenCreate}>
             <Plus className="h-4 w-4 mr-2" />
@@ -144,9 +138,9 @@ const AdminEducation = () => {
                 </CardContent>
               </Card>
             ) : (
-              education.map((edu) => (
+              education.map((edu, idx) => (
                 <motion.div
-                  key={edu.id}
+                  key={`${edu.institutionName}-${idx}`}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -154,20 +148,16 @@ const AdminEducation = () => {
                   <Card>
                     <CardHeader className="flex flex-row items-start justify-between space-y-0">
                       <div>
-                        <CardTitle className="text-lg">{edu.institution}</CardTitle>
+                        <CardTitle className="text-lg">{edu.institutionName}</CardTitle>
                         <p className="text-muted-foreground">
-                          {edu.degree} in {edu.field}
+                          {edu.degree} in {edu.fieldOfStudy}
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {edu.startYear} - {edu.endYear}
                         </p>
                       </div>
                       <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenEdit(edu)}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(edu)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
                         <Button
@@ -180,15 +170,9 @@ const AdminEducation = () => {
                         </Button>
                       </div>
                     </CardHeader>
-                    {edu.achievements.length > 0 && (
+                    {edu.description && (
                       <CardContent>
-                        <div className="flex flex-wrap gap-2">
-                          {edu.achievements.map((achievement, i) => (
-                            <Badge key={i} variant="secondary">
-                              {achievement}
-                            </Badge>
-                          ))}
-                        </div>
+                        <p className="text-muted-foreground">{edu.description}</p>
                       </CardContent>
                     )}
                   </Card>
@@ -198,57 +182,54 @@ const AdminEducation = () => {
           </AnimatePresence>
         </div>
 
-        {/* Edit/Create Dialog */}
+        {/* Add/Edit Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-lg">
             <DialogHeader>
-              <DialogTitle>
-                {editingItem ? "Edit Education" : "Add Education"}
-              </DialogTitle>
+              <DialogTitle>{editingItem ? "Edit Education" : "Add Education"}</DialogTitle>
               <DialogDescription>
                 {editingItem
                   ? "Update the education record details"
                   : "Add a new education record to your portfolio"}
               </DialogDescription>
             </DialogHeader>
+
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="institution">Institution</Label>
+                <Label>Institution</Label>
                 <Input
-                  id="institution"
-                  name="institution"
+                  name="institutionName"
                   placeholder="University name"
-                  value={formData.institution}
+                  value={formData.institutionName}
                   onChange={handleChange}
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="degree">Degree</Label>
+                  <Label>Degree</Label>
                   <Input
-                    id="degree"
                     name="degree"
-                    placeholder="e.g., Bachelor of Science"
+                    placeholder="Bachelor of Science"
                     value={formData.degree}
                     onChange={handleChange}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="field">Field of Study</Label>
+                  <Label>Field of Study</Label>
                   <Input
-                    id="field"
-                    name="field"
-                    placeholder="e.g., Computer Science"
-                    value={formData.field}
+                    name="fieldOfStudy"
+                    placeholder="Computer Science"
+                    value={formData.fieldOfStudy}
                     onChange={handleChange}
                   />
                 </div>
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startYear">Start Year</Label>
+                  <Label>Start Year</Label>
                   <Input
-                    id="startYear"
                     name="startYear"
                     placeholder="2021"
                     value={formData.startYear}
@@ -256,9 +237,8 @@ const AdminEducation = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="endYear">End Year</Label>
+                  <Label>End Year</Label>
                   <Input
-                    id="endYear"
                     name="endYear"
                     placeholder="2025"
                     value={formData.endYear}
@@ -266,37 +246,18 @@ const AdminEducation = () => {
                   />
                 </div>
               </div>
-              <div className="space-y-3">
-                <Label>Achievements</Label>
-                <div className="flex flex-wrap gap-2">
-                  {formData.achievements.map((achievement, index) => (
-                    <Badge key={index} variant="secondary" className="gap-1">
-                      {achievement}
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveAchievement(index)}
-                        className="ml-1 hover:text-destructive"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </Badge>
-                  ))}
-                </div>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Add achievement..."
-                    value={newAchievement}
-                    onChange={(e) => setNewAchievement(e.target.value)}
-                    onKeyDown={(e) =>
-                      e.key === "Enter" && (e.preventDefault(), handleAddAchievement())
-                    }
-                  />
-                  <Button type="button" variant="outline" onClick={handleAddAchievement}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  className="w-full min-h-[100px] rounded-md border p-2"
+                />
               </div>
             </div>
+
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
@@ -316,7 +277,7 @@ const AdminEducation = () => {
               <AlertDialogTitle>Delete Education Record?</AlertDialogTitle>
               <AlertDialogDescription>
                 This will permanently delete the education record for{" "}
-                <strong>{editingItem?.institution}</strong>. This action cannot be undone.
+                <strong>{editingItem?.institutionName}</strong>. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
