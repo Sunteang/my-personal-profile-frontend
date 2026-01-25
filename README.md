@@ -57,12 +57,6 @@ Note: This README intentionally omits repository cloning instructions.
 
 ## Contact & socials
 
-- **Email:** your@email.com (replace)
-- **LinkedIn:** https://linkedin.com/in/your-profile (replace)
-- **GitHub:** https://github.com/your-username (replace)
-
-## Next steps I can help with
-
-- Fill in your real name, bio, and contact info in this README
-- Add project entries and images to `public/images/projects/`
-- Update the live demo URL when deployed
+- **Email:** sereysunteang@email.com
+- **LinkedIn:** https://www.linkedin.com/in/sunteangserey/
+- **GitHub:** https://github.com/Sunteang
